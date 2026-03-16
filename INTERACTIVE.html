@@ -4,6 +4,7 @@
     max-width: 900px;
     margin: 0 auto;
   }
+
   .layout {
     display: grid;
     grid-template-columns: 1fr 320px;
@@ -12,9 +13,11 @@
     border-radius: var(--border-radius-lg);
     overflow: hidden;
   }
+
   .browser-wrap {
     background: var(--color-background-secondary);
   }
+
   .browser-bar {
     display: flex;
     align-items: center;
@@ -23,20 +26,25 @@
     border-bottom: 0.5px solid var(--color-border-tertiary);
     background: var(--color-background-primary);
   }
+
   .dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
   }
+
   .dot.r {
     background: #e24b4a;
   }
+
   .dot.y {
     background: #ef9f27;
   }
+
   .dot.g {
     background: #639922;
   }
+
   .url-bar {
     flex: 1;
     background: var(--color-background-secondary);
@@ -47,6 +55,7 @@
     font-family: var(--font-mono);
     color: var(--color-text-secondary);
   }
+
   .browser-body {
     padding: 20px;
     min-height: 280px;
@@ -54,6 +63,7 @@
     align-items: center;
     justify-content: center;
   }
+
   .terminal {
     background: #1a1a1a;
     border-radius: 8px;
@@ -64,6 +74,7 @@
     color: #d4d4d4;
     width: 100%;
   }
+
   .term-header {
     display: flex;
     align-items: center;
@@ -72,35 +83,44 @@
     padding-bottom: 10px;
     border-bottom: 0.5px solid #333;
   }
+
   .t-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
   }
+
   .term-title {
     font-size: 11px;
     color: #666;
     margin-left: auto;
   }
+
   .t-green {
     color: #4caf50;
   }
+
   .t-yellow {
     color: #ef9f27;
   }
+
   .t-blue {
     color: #85b7eb;
   }
+
   .t-red {
     color: #e24b4a;
   }
+
   .t-gray {
     color: #888;
   }
+
   .t-white {
     color: #fff;
     font-weight: 500;
   }
+
   .panel {
     background: var(--color-background-primary);
     border-left: 0.5px solid var(--color-border-tertiary);
@@ -109,6 +129,7 @@
     flex-direction: column;
     gap: 0;
   }
+
   .step-badge {
     font-size: 11px;
     font-weight: 500;
@@ -119,12 +140,14 @@
     display: inline-block;
     margin-bottom: 10px;
   }
+
   .step-title {
     font-size: 15px;
     font-weight: 500;
     color: var(--color-text-primary);
     margin: 0 0 10px;
   }
+
   .step-desc {
     font-size: 13px;
     color: var(--color-text-secondary);
@@ -132,6 +155,7 @@
     margin: 0;
     flex: 1;
   }
+
   .tech-box {
     margin-top: 14px;
     padding: 10px 12px;
@@ -139,6 +163,7 @@
     border-radius: var(--border-radius-md);
     border: 0.5px solid var(--color-border-tertiary);
   }
+
   .tech-label {
     font-size: 10px;
     font-weight: 500;
@@ -147,12 +172,14 @@
     letter-spacing: 0.05em;
     margin-bottom: 5px;
   }
+
   .tech-text {
     font-size: 12px;
     color: var(--color-text-secondary);
     line-height: 1.55;
     margin: 0;
   }
+
   .nav {
     display: flex;
     align-items: center;
@@ -161,10 +188,12 @@
     padding-top: 14px;
     border-top: 0.5px solid var(--color-border-tertiary);
   }
+
   .dots-row {
     display: flex;
     gap: 6px;
   }
+
   .dot-step {
     width: 7px;
     height: 7px;
@@ -172,9 +201,11 @@
     background: var(--color-border-secondary);
     transition: background 0.2s;
   }
+
   .dot-step.active {
     background: var(--color-text-info);
   }
+
   .btn {
     padding: 7px 16px;
     font-size: 13px;
@@ -184,21 +215,26 @@
     background: transparent;
     color: var(--color-text-primary);
   }
+
   .btn:hover {
     background: var(--color-background-secondary);
   }
+
   .btn.primary {
     background: var(--color-background-info);
     color: var(--color-text-info);
     border-color: transparent;
   }
+
   .btn.primary:hover {
     opacity: 0.85;
   }
+
   .btn:disabled {
     opacity: 0.35;
     cursor: default;
   }
+
   .progress-bar {
     height: 3px;
     background: var(--color-border-tertiary);
@@ -206,17 +242,20 @@
     overflow: hidden;
     margin-bottom: 20px;
   }
+
   .progress-fill {
     height: 100%;
     background: var(--color-text-info);
     border-radius: 2px;
     transition: width 0.4s ease;
   }
+
   .final-errors {
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
+
   .error-item {
     padding: 8px 12px;
     border-radius: var(--border-radius-md);
@@ -225,6 +264,7 @@
     font-size: 12px;
     color: var(--color-text-danger);
   }
+
   .fix-box {
     padding: 10px 12px;
     background: var(--color-background-success);
@@ -236,31 +276,33 @@
   }
 </style>
 
-<div class="sim">
-  <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
-  <div class="layout">
-    <div class="browser-wrap">
-      <div class="browser-bar">
-        <div class="dot r"></div>
-        <div class="dot y"></div>
-        <div class="dot g"></div>
-        <div class="url-bar" id="urlbar">C:\temp\listener.exe</div>
+<div className="sim">
+  <div className="progress-bar">
+    <div className="progress-fill" id="prog"></div>
+  </div>
+  <div className="layout">
+    <div className="browser-wrap">
+      <div className="browser-bar">
+        <div className="dot r"></div>
+        <div className="dot y"></div>
+        <div className="dot g"></div>
+        <div className="url-bar" id="urlbar">C:\temp\listener.exe</div>
       </div>
-      <div class="browser-body" id="screenbody"></div>
+      <div className="browser-body" id="screenbody"></div>
     </div>
-    <div class="panel">
-      <div class="step-badge" id="stepbadge">Шаг 1 из 4</div>
-      <p class="step-title" id="steptitle"></p>
-      <p class="step-desc" id="stepdesc"></p>
-      <div class="tech-box">
-        <div class="tech-label">Технически</div>
-        <p class="tech-text" id="techtext"></p>
+    <div className="panel">
+      <div className="step-badge" id="stepbadge">Шаг 1 из 4</div>
+      <p className="step-title" id="steptitle"></p>
+      <p className="step-desc" id="stepdesc"></p>
+      <div className="tech-box">
+        <div className="tech-label">Технически</div>
+        <p className="tech-text" id="techtext"></p>
       </div>
-      <div class="nav">
-        <div class="dots-row" id="dotsrow"></div>
+      <div className="nav">
+        <div className="dots-row" id="dotsrow"></div>
         <div style="display: flex; gap: 8px">
-          <button class="btn" id="prevbtn" onclick="go(-1)">← Назад</button>
-          <button class="btn primary" id="nextbtn" onclick="go(1)">
+          <button className="btn" id="prevbtn" onClick="go(-1)">← Назад</button>
+          <button className="btn primary" id="nextbtn" onClick="go(1)">
             Далее →
           </button>
         </div>
@@ -273,10 +315,10 @@
   const steps = [
     {
       url: "capture-node.exe --target bank.corp",
-      badge: "Шаг 1 из 4",
+      badge: "Шаг 1 из 5",
       title: "Сбор урожая",
-      desc: "2025 год. Артем настраивает перехват трафика через подконтрольный узел. Банк использует TLS 1.3 с ECDH P-256. Всё надёжно. «Сейчас — да», — думает Артем и нажимает Enter.",
-      tech: "Злоумышленник записывает зашифрованные TLS-сессии целиком, включая обмен ключами. Расшифровать их сейчас невозможно — но зашифрованные данные никуда не деваются.",
+      desc: "2025 год. Арендованный сервер где-то в Европе. Банк использует TLS 1.3 с RSA-2048 и ECDH на кривой P-256. Всё по учебнику. Всё надёжно. «Сейчас — да», — думает Артём и нажимает Enter.",
+      tech: "Злоумышленник записывает зашифрованные TLS-сессии целиком — включая обмен ключами (ClientHello, ServerHello). Расшифровать сейчас невозможно. Но зашифрованные данные никуда не деваются.",
       screen: `<div class="terminal">
       <div class="term-header"><div class="t-dot" style="background:#E24B4A"></div><div class="t-dot" style="background:#EF9F27"></div><div class="t-dot" style="background:#639922"></div><span class="term-title">capture-node.exe</span></div>
       <div><span class="t-gray">[*]</span> <span class="t-blue">Connecting to transit node...</span> <span class="t-green">OK</span></div>
@@ -288,25 +330,42 @@
     },
     {
       url: "cold-storage --upload ./archives/",
-      badge: "Шаг 2 из 4",
+      badge: "Шаг 2 из 5",
       title: "Холодное хранение",
-      desc: "Артем архивирует дампы и отправляет в холодное хранилище. За год — 61 ГБ корпоративного трафика. Он закрывает ноутбук и идёт спать. Завтра — обычный рабочий день.",
-      tech: "Стоимость хранения 1 ТБ в 2025 году — ~$20/месяц. Долгосрочное накопление зашифрованного трафика экономически тривиально.",
+      desc: "Артём архивирует дампы и отправляет в холодное хранилище. За год — 61 ГБ корпоративного трафика. Он закрывает ноутбук и идёт спать. Завтра — обычный рабочий день.",
+      tech: "Стоимость холодного хранения в 2025 году настолько мала, что накапливать зашифрованный трафик годами — экономически тривиально.",
       screen: `<div class="terminal">
       <div class="term-header"><div class="t-dot" style="background:#E24B4A"></div><div class="t-dot" style="background:#EF9F27"></div><div class="t-dot" style="background:#639922"></div><span class="term-title">cold-storage.exe</span></div>
       <div><span class="t-gray">[UPLOAD]</span> <span class="t-yellow">archive_2025_*.enc</span> → <span class="t-blue">cold_storage/bank_harvest/</span></div>
       <div style="margin-top:6px"><span class="t-gray">[STATUS]</span> Total stored: <span class="t-white">61.4 GB</span></div>
       <div><span class="t-gray">[COST]  </span> Monthly: <span class="t-green">$1.23</span></div>
-      <div><span class="t-gray">[NOTE]  </span> <span class="t-gray">"Дешевле подписки на стриминг."</span></div>
+      <div><span class="t-gray">[NOTE]  </span> <span class="t-gray">"Дешевле, чем подписка на стриминговый сервис."</span></div>
       <div style="margin-top:8px; border-top:0.5px solid #333; padding-top:8px"><span class="t-gray">Next action: </span><span class="t-white">wait(years=6)</span></div>
     </div>`,
     },
     {
-      url: "news.rss — 2031-03-14",
-      badge: "Шаг 3 из 4",
+      url: "calendar.app — 2025 → 2031",
+      badge: "Шаг 3 из 5",
+      title: "Ожидание",
+      desc: "2025 → 2026 → … → 2031. Артём продолжает работать аналитиком. Читает новости о квантовых компьютерах. Ждёт. Однажды он видит заголовок: «Google объявляет о первом CRQC: RSA-2048 взломан за 4 часа».",
+      tech: "CRQC способен запустить алгоритм Шора на реальных ключах. Для RSA-2048 это ~4000 логических кубитов, для ECDH P-256 — ~2330. Эллиптические кривые падут первыми.",
+      screen: `<div class="terminal">
+      <div class="term-header"><div class="t-dot" style="background:#E24B4A"></div><div class="t-dot" style="background:#EF9F27"></div><div class="t-dot" style="background:#639922"></div><span class="term-title">news.rss</span></div>
+      <div><span class="t-gray">2025-01-01</span> IBM анонсирует 1000-кубитный процессор</div>
+      <div><span class="t-gray">2027-06-14</span> Google: прогресс в коррекции ошибок кубитов</div>
+      <div><span class="t-gray">2029-11-03</span> NIST призывает ускорить миграцию на PQC</div>
+      <div style="margin-top:8px; border-top:0.5px solid #333; padding-top:8px">
+        <span class="t-red">2031-03-14</span> <span class="t-white">BREAKING:</span> <span class="t-yellow">Google объявляет о первом CRQC.</span>
+      </div>
+      <div style="margin-top:4px"><span class="t-gray">RSA-2048 взломан за 4 часа.</span></div>
+    </div>`,
+    },
+    {
+      url: "quantum_shor_client --algorithm ECDH-P256",
+      badge: "Шаг 4 из 5",
       title: "Час расплаты",
-      desc: "2031 год. Артем видит заголовок: «Google объявляет о первом CRQC: RSA-2048 взломан за 4 часа». Он достаёт архивы шестилетней давности.",
-      tech: "CRQC запускает алгоритм Шора на ECDH-ключах. Для ECDSA-256 нужно ~2330 логических кубитов — меньше, чем для RSA. Эллиптические кривые пали первыми.",
+      desc: "2031 год. Артём достаёт архивы шестилетней давности. Шесть лет ожидания. Один скрипт. Полный архив транзакций. «Терпение», — говорит он сам себе и открывает следующий файл.",
+      tech: "Алгоритм Шора восстанавливает приватный ключ из публичного за полиномиальное время. Имея ключ ECDH-сессии, атакующий расшифровывает всю переписку — включая данные, переданные годы назад.",
       screen: `<div class="terminal">
       <div class="term-header"><div class="t-dot" style="background:#E24B4A"></div><div class="t-dot" style="background:#EF9F27"></div><div class="t-dot" style="background:#639922"></div><span class="term-title">quantum_shor_client</span></div>
       <div><span class="t-gray">[LOAD]   </span> <span class="t-blue">bank_harvest/archive_2025_01.enc</span></div>
@@ -324,9 +383,9 @@
     {
       url: "— итог —",
       badge: "Финал",
-      title: "Что пошло не так?",
-      desc: "Шесть лет ожидания. Один скрипт. Полный архив транзакций. «Терпение», — говорит Артем и открывает следующий файл.",
-      tech: "Гибридный KDF: MasterSecret = KDF(ECDH || Kyber). Для расшифровки нужно сломать оба алгоритма одновременно. Артем закрыл бы ноутбук и пошёл спать без планов.",
+      title: "Что изменило бы исход?",
+      desc: "Банк совершил три ошибки. Если бы он добавил ML-KEM (Kyber) рядом с ECDH до начала сбора архивов — Артёму понадобились бы одновременно квантовый компьютер и неизвестная уязвимость в Kyber. Артём закрыл бы ноутбук и пошёл спать уже без планов на утро.",
+      tech: "Гибридный KDF: MasterSecret = KDF(ECDH || Kyber). Для расшифровки нужно сломать оба алгоритма одновременно. Артём закрыл бы ноутбук и пошёл спать без планов.",
       screen: null,
     },
   ];
@@ -346,13 +405,14 @@
       body.innerHTML = s.screen;
     } else {
       body.innerHTML = `<div style="width:100%;padding:8px">
+      <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:10px">Что изменило бы исход?</div>
       <div class="final-errors">
         <div class="error-item">ECDH P-256 уязвим для алгоритма Шора — ECC падает первой</div>
         <div class="error-item">Не внедрён гибридный обмен ключами (X25519 + Kyber)</div>
         <div class="error-item">Миграция откладывалась — X + Y превысило Z</div>
       </div>
       <div class="fix-box" style="margin-top:10px">
-        Гибрид x25519_mlkem768 защитил бы архивы. Артему потребовался бы и квантовый компьютер, и уязвимость в Kyber одновременно.
+        Гибрид x25519_mlkem768 защитил бы архивы. Артёму потребовались бы одновременно квантовый компьютер и неизвестная уязвимость в Kyber. Артём закрыл бы ноутбук и пошёл спать уже без планов на утро.
       </div>
     </div>`;
     }
@@ -362,17 +422,17 @@
 
     const dots = document.getElementById("dotsrow");
     dots.innerHTML = steps
-      .map((_, j) => `<div class="dot-step${j === i ? " active" : ""}"></div>`)
-      .join("");
+            .map((_, j) => `<div class="dot-step${j === i ? " active" : ""}"></div>`)
+            .join("");
 
     document.getElementById("prevbtn").disabled = i === 0;
     const nb = document.getElementById("nextbtn");
     if (i === steps.length - 1) {
       nb.textContent = "К статье ↗";
       nb.onclick = () =>
-        sendPrompt(
-          "Расскажи подробнее о гибридном обмене ключами X25519 + Kyber",
-        );
+              sendPrompt(
+                      "Расскажи подробнее о гибридном обмене ключами X25519 + Kyber",
+              );
     } else {
       nb.textContent = "Далее →";
       nb.onclick = () => go(1);
