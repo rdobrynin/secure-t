@@ -29,7 +29,9 @@
 
 ![Криптография_1.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_1.png)
 
-Оптимизация алгоритма Шора (Gidney Optimization, май 2025) снизила необходимое число физических кубитов для взлома RSA-2048 с ~20 миллионов до менее 1 миллиона. Прогноз появления CRQC сдвинулся с «никогда» на начало 2030-х.
+К 2025 году оптимизация алгоритма Шора (Gidney Optimization) снизила необходимое
+число физических кубитов для взлома RSA-2048 с ~20 миллионов до менее 1 миллиона.
+Прогноз появления CRQC сдвинулся с «никогда» на начало 2030-х.
 
 ### Стратегия HNDL: атака, которая уже идёт
 
@@ -73,6 +75,8 @@ def check_quantum_risk(data_type: str, shelf_life_years: int, migration_estimate
 if __name__ == "__main__":
     check_quantum_risk("Session Tokens", shelf_life_years=0, migration_estimate_years=3)
     check_quantum_risk("Genomic Data / Trade Secrets", shelf_life_years=15, migration_estimate_years=5)
+    # Примечание: YEAR_CRQC_ARRIVAL = 2032 — консервативная оценка.
+    # Обновляйте константу по мере появления новых данных о прогрессе CRQC.
 ```
 
 ---
@@ -305,6 +309,9 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 from hypothetical_ssl_lib import SSLContext, Protocols
 
 def create_context():
+    # ВНИМАНИЕ: явно задавайте все параметры TLS.
+    # Default-значения библиотеки могут включать устаревшие алгоритмы
+    # (RSA key exchange, TLS 1.2, RC4) — не полагайтесь на них.
     ctx = SSLContext(protocol=Protocols.TLSv1_3)
     # [УЯЗВИМОСТЬ 1] ECDH без квантовой защиты — весь трафик уязвим для HNDL
     ctx.set_key_exchange_group("secp256r1")
@@ -330,8 +337,10 @@ def create_quantum_safe_context():
     ctx = SSLContext(protocol=Protocols.TLSv1_3)
     ctx.set_key_exchange_groups([
         "x25519_mlkem768",  # гибрид — предпочтительный
-        "x25519"            # fallback для старых клиентов
+        "x25519"            # fallback для старых клиентов; RSA key exchange исключён намеренно
     ])
+    # Периодически пересматривайте список: когда доля клиентов без PQC-поддержки
+    # упадёт до нуля, fallback "x25519" можно убрать.
     ctx.set_ciphers([
         "TLS_AES_256_GCM_SHA384",
         "TLS_CHACHA20_POLY1305_SHA256"  # для мобильных без аппаратного AES
