@@ -1,0 +1,388 @@
+<style>
+  .sim {
+    font-family: var(--font-sans);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+  }
+  .browser-wrap {
+    background: var(--color-background-secondary);
+  }
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .dot.r {
+    background: #e24b4a;
+  }
+  .dot.y {
+    background: #ef9f27;
+  }
+  .dot.g {
+    background: #639922;
+  }
+  .url-bar {
+    flex: 1;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--color-text-secondary);
+  }
+  .browser-body {
+    padding: 20px;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .terminal {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: #d4d4d4;
+    width: 100%;
+  }
+  .term-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid #333;
+  }
+  .t-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .term-title {
+    font-size: 11px;
+    color: #666;
+    margin-left: auto;
+  }
+  .t-green {
+    color: #4caf50;
+  }
+  .t-yellow {
+    color: #ef9f27;
+  }
+  .t-blue {
+    color: #85b7eb;
+  }
+  .t-red {
+    color: #e24b4a;
+  }
+  .t-gray {
+    color: #888;
+  }
+  .t-white {
+    color: #fff;
+    font-weight: 500;
+  }
+  .panel {
+    background: var(--color-background-primary);
+    border-left: 0.5px solid var(--color-border-tertiary);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .step-badge {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-info);
+    background: var(--color-background-info);
+    border-radius: 20px;
+    padding: 3px 10px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .step-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin: 0 0 10px;
+  }
+  .step-desc {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    flex: 1;
+  }
+  .tech-box {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+  .tech-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+  }
+  .tech-text {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    margin: 0;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+  }
+  .dots-row {
+    display: flex;
+    gap: 6px;
+  }
+  .dot-step {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-border-secondary);
+    transition: background 0.2s;
+  }
+  .dot-step.active {
+    background: var(--color-text-info);
+  }
+  .btn {
+    padding: 7px 16px;
+    font-size: 13px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    border: 0.5px solid var(--color-border-secondary);
+    background: transparent;
+    color: var(--color-text-primary);
+  }
+  .btn:hover {
+    background: var(--color-background-secondary);
+  }
+  .btn.primary {
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-color: transparent;
+  }
+  .btn.primary:hover {
+    opacity: 0.85;
+  }
+  .btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .progress-bar {
+    height: 3px;
+    background: var(--color-border-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--color-text-info);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .final-errors {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .error-item {
+    padding: 8px 12px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-danger);
+    background: var(--color-background-danger);
+    font-size: 12px;
+    color: var(--color-text-danger);
+  }
+  .fix-box {
+    padding: 10px 12px;
+    background: var(--color-background-success);
+    border: 0.5px solid var(--color-border-success);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    color: var(--color-text-success);
+    line-height: 1.55;
+  }
+</style>
+
+<div class="sim">
+  <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+  <div class="layout">
+    <div class="browser-wrap">
+      <div class="browser-bar">
+        <div class="dot r"></div>
+        <div class="dot y"></div>
+        <div class="dot g"></div>
+        <div class="url-bar" id="urlbar">C:\temp\listener.exe</div>
+      </div>
+      <div class="browser-body" id="screenbody"></div>
+    </div>
+    <div class="panel">
+      <div class="step-badge" id="stepbadge">Шаг 1 из 4</div>
+      <p class="step-title" id="steptitle"></p>
+      <p class="step-desc" id="stepdesc"></p>
+      <div class="tech-box">
+        <div class="tech-label">Технически</div>
+        <p class="tech-text" id="techtext"></p>
+      </div>
+      <div class="nav">
+        <div class="dots-row" id="dotsrow"></div>
+        <div style="display: flex; gap: 8px">
+          <button class="btn" id="prevbtn" onclick="go(-1)">← Назад</button>
+          <button class="btn primary" id="nextbtn" onclick="go(1)">
+            Далее →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const steps = [
+    {
+      url: "capture-node.exe --target bank.corp",
+      badge: "Шаг 1 из 4",
+      title: "Сбор урожая",
+      desc: "2025 год. Артем настраивает перехват трафика через подконтрольный узел. Банк использует TLS 1.3 с ECDH P-256. Всё надёжно. «Сейчас — да», — думает Артем и нажимает Enter.",
+      tech: "Злоумышленник записывает зашифрованные TLS-сессии целиком, включая обмен ключами. Расшифровать их сейчас невозможно — но зашифрованные данные никуда не деваются.",
+      screen: `<div class="terminal">
+      <div class="term-header"><div class="t-dot" style="background:#E24B4A"></div><div class="t-dot" style="background:#EF9F27"></div><div class="t-dot" style="background:#639922"></div><span class="term-title">capture-node.exe</span></div>
+      <div><span class="t-gray">[*]</span> <span class="t-blue">Connecting to transit node...</span> <span class="t-green">OK</span></div>
+      <div style="margin-top:6px"><span class="t-gray">[+]</span> <span class="t-white">CAPTURE</span> TLS dump → <span class="t-yellow">archive_2025_01.enc</span> <span class="t-gray">[4.2 GB]</span></div>
+      <div><span class="t-gray">[+]</span> <span class="t-white">CAPTURE</span> TLS dump → <span class="t-yellow">archive_2025_02.enc</span> <span class="t-gray">[3.8 GB]</span></div>
+      <div><span class="t-gray">[+]</span> <span class="t-white">CAPTURE</span> TLS dump → <span class="t-yellow">archive_2025_03.enc</span> <span class="t-gray">[5.1 GB]</span></div>
+      <div style="margin-top:8px; border-top: 0.5px solid #333; padding-top:8px"><span class="t-gray">Status: </span><span class="t-green">Running.</span> <span class="t-gray">Traffic looks like noise. That's fine.</span></div>
+    </div>`,
+    },
+    {
+      url: "cold-storage --upload ./archives/",
+      badge: "Шаг 2 из 4",
+      title: "Холодное хранение",
+      desc: "Артем архивирует дампы и отправляет в холодное хранилище. За год — 61 ГБ корпоративного трафика. Он закрывает ноутбук и идёт спать. Завтра — обычный рабочий день.",
+      tech: "Стоимость хранения 1 ТБ в 2025 году — ~$20/месяц. Долгосрочное накопление зашифрованного трафика экономически тривиально.",
+      screen: `<div class="terminal">
+      <div class="term-header"><div class="t-dot" style="background:#E24B4A"></div><div class="t-dot" style="background:#EF9F27"></div><div class="t-dot" style="background:#639922"></div><span class="term-title">cold-storage.exe</span></div>
+      <div><span class="t-gray">[UPLOAD]</span> <span class="t-yellow">archive_2025_*.enc</span> → <span class="t-blue">cold_storage/bank_harvest/</span></div>
+      <div style="margin-top:6px"><span class="t-gray">[STATUS]</span> Total stored: <span class="t-white">61.4 GB</span></div>
+      <div><span class="t-gray">[COST]  </span> Monthly: <span class="t-green">$1.23</span></div>
+      <div><span class="t-gray">[NOTE]  </span> <span class="t-gray">"Дешевле подписки на стриминг."</span></div>
+      <div style="margin-top:8px; border-top:0.5px solid #333; padding-top:8px"><span class="t-gray">Next action: </span><span class="t-white">wait(years=6)</span></div>
+    </div>`,
+    },
+    {
+      url: "news.rss — 2031-03-14",
+      badge: "Шаг 3 из 4",
+      title: "Час расплаты",
+      desc: "2031 год. Артем видит заголовок: «Google объявляет о первом CRQC: RSA-2048 взломан за 4 часа». Он достаёт архивы шестилетней давности.",
+      tech: "CRQC запускает алгоритм Шора на ECDH-ключах. Для ECDSA-256 нужно ~2330 логических кубитов — меньше, чем для RSA. Эллиптические кривые пали первыми.",
+      screen: `<div class="terminal">
+      <div class="term-header"><div class="t-dot" style="background:#E24B4A"></div><div class="t-dot" style="background:#EF9F27"></div><div class="t-dot" style="background:#639922"></div><span class="term-title">quantum_shor_client</span></div>
+      <div><span class="t-gray">[LOAD]   </span> <span class="t-blue">bank_harvest/archive_2025_01.enc</span></div>
+      <div><span class="t-gray">[ALGO]   </span> <span class="t-white">Shor</span> on <span class="t-yellow">ECDH-P256</span></div>
+      <div style="margin-top:6px"><span class="t-gray">[RUN]    </span> Recovering session key... <span class="t-yellow">████████░░</span> 80%</div>
+      <div><span class="t-gray">[RUN]    </span> Recovering session key... <span class="t-green">██████████</span> 100%</div>
+      <div style="margin-top:6px"><span class="t-green">[SUCCESS]</span> Key: <span class="t-white">a3f9...b21c</span></div>
+      <div><span class="t-green">[DECRYPT]</span> → <span class="t-yellow">archive_2025_01_plain.json</span></div>
+      <div style="margin-top:8px; padding:8px; background:#0d2d1a; border-radius:4px; font-size:11px;">
+        <span class="t-gray">amount: </span><span class="t-white">2 850 000 RUB</span><br>
+        <span class="t-gray">auth_token: </span><span class="t-white">eyJhbGci...</span>
+      </div>
+    </div>`,
+    },
+    {
+      url: "— итог —",
+      badge: "Финал",
+      title: "Что пошло не так?",
+      desc: "Шесть лет ожидания. Один скрипт. Полный архив транзакций. «Терпение», — говорит Артем и открывает следующий файл.",
+      tech: "Гибридный KDF: MasterSecret = KDF(ECDH || Kyber). Для расшифровки нужно сломать оба алгоритма одновременно. Артем закрыл бы ноутбук и пошёл спать без планов.",
+      screen: null,
+    },
+  ];
+
+  let cur = 0;
+
+  function renderStep(i) {
+    const s = steps[i];
+    document.getElementById("urlbar").textContent = s.url;
+    document.getElementById("stepbadge").textContent = s.badge;
+    document.getElementById("steptitle").textContent = s.title;
+    document.getElementById("stepdesc").textContent = s.desc;
+    document.getElementById("techtext").textContent = s.tech;
+
+    const body = document.getElementById("screenbody");
+    if (i < 3) {
+      body.innerHTML = s.screen;
+    } else {
+      body.innerHTML = `<div style="width:100%;padding:8px">
+      <div class="final-errors">
+        <div class="error-item">ECDH P-256 уязвим для алгоритма Шора — ECC падает первой</div>
+        <div class="error-item">Не внедрён гибридный обмен ключами (X25519 + Kyber)</div>
+        <div class="error-item">Миграция откладывалась — X + Y превысило Z</div>
+      </div>
+      <div class="fix-box" style="margin-top:10px">
+        Гибрид x25519_mlkem768 защитил бы архивы. Артему потребовался бы и квантовый компьютер, и уязвимость в Kyber одновременно.
+      </div>
+    </div>`;
+    }
+
+    const prog = document.getElementById("prog");
+    prog.style.width = ((i + 1) / steps.length) * 100 + "%";
+
+    const dots = document.getElementById("dotsrow");
+    dots.innerHTML = steps
+      .map((_, j) => `<div class="dot-step${j === i ? " active" : ""}"></div>`)
+      .join("");
+
+    document.getElementById("prevbtn").disabled = i === 0;
+    const nb = document.getElementById("nextbtn");
+    if (i === steps.length - 1) {
+      nb.textContent = "К статье ↗";
+      nb.onclick = () =>
+        sendPrompt(
+          "Расскажи подробнее о гибридном обмене ключами X25519 + Kyber",
+        );
+    } else {
+      nb.textContent = "Далее →";
+      nb.onclick = () => go(1);
+    }
+  }
+
+  function go(dir) {
+    cur = Math.max(0, Math.min(steps.length - 1, cur + dir));
+    renderStep(cur);
+  }
+
+  renderStep(0);
+</script>

@@ -1,0 +1,54 @@
+<svg viewBox="0 0 780 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#888780"/></marker>
+    <marker id="arr-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#E24B4A"/></marker>
+    <marker id="arr-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1D9E75"/></marker>
+  </defs>
+  <rect width="780" height="320" fill="#ffffff"/>
+  <text x="390" y="26" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Сценарий 1 — «Тихий архивариус»: HNDL на корпоративный VPN</text>
+  <rect x="20" y="60" width="120" height="64" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+  <text x="80" y="84" text-anchor="middle" font-size="11" font-weight="500" fill="#085041">Офис A</text>
+  <text x="80" y="100" text-anchor="middle" font-size="10" fill="#0F6E56">VPN-клиент</text>
+  <text x="80" y="114" text-anchor="middle" font-size="10" fill="#0F6E56">ECDH P-256</text>
+  <rect x="220" y="48" width="340" height="90" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+  <text x="390" y="70" text-anchor="middle" font-size="11" font-weight="500" fill="#444441">Транзитная сеть (ISP / BGP)</text>
+  <rect x="320" y="82" width="140" height="44" rx="6" fill="#FCEBEB" stroke="#E24B4A" stroke-width="0.5"/>
+  <text x="390" y="101" text-anchor="middle" font-size="10" font-weight="500" fill="#A32D2D">Скомпрометированный узел</text>
+  <text x="390" y="116" text-anchor="middle" font-size="10" fill="#A32D2D">PCAP-запись трафика</text>
+  <rect x="640" y="60" width="120" height="64" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+  <text x="700" y="84" text-anchor="middle" font-size="11" font-weight="500" fill="#085041">Офис Б</text>
+  <text x="700" y="100" text-anchor="middle" font-size="10" fill="#0F6E56">VPN-сервер</text>
+  <text x="700" y="114" text-anchor="middle" font-size="10" fill="#0F6E56">ECDH P-256</text>
+  <line x1="140" y1="92" x2="218" y2="92" stroke="#888780" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="179" y="85" text-anchor="middle" font-size="9" fill="#5F5E5A">TLS enc.</text>
+  <line x1="462" y1="92" x2="638" y2="92" stroke="#888780" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="550" y="85" text-anchor="middle" font-size="9" fill="#5F5E5A">TLS enc.</text>
+  <rect x="280" y="180" width="220" height="52" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+  <text x="390" y="202" text-anchor="middle" font-size="11" font-weight="500" fill="#633806">Холодное хранилище</text>
+  <text x="390" y="218" text-anchor="middle" font-size="10" fill="#854F0B">archive_2025_*.enc  ~$1.23/мес.</text>
+  <line x1="390" y1="126" x2="390" y2="178" stroke="#E24B4A" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+  <text x="416" y="157" font-size="9" fill="#A32D2D">копирует</text>
+  <rect x="560" y="180" width="180" height="52" rx="8" fill="#FCEBEB" stroke="#E24B4A" stroke-width="0.5"/>
+  <text x="650" y="202" text-anchor="middle" font-size="11" font-weight="500" fill="#A32D2D">CRQC — 2031</text>
+  <text x="650" y="218" text-anchor="middle" font-size="10" fill="#993C1D">алгоритм Шора → ключи ECDH</text>
+  <line x1="500" y1="206" x2="558" y2="206" stroke="#E24B4A" stroke-width="1.2" marker-end="url(#arr-red)"/>
+  <rect x="20" y="180" width="220" height="52" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+  <text x="130" y="202" text-anchor="middle" font-size="11" font-weight="500" fill="#085041">Фикс: гибридный обмен</text>
+  <text x="130" y="218" text-anchor="middle" font-size="10" fill="#0F6E56">x25519_mlkem768 + fallback x25519</text>
+  <line x1="240" y1="206" x2="278" y2="206" stroke="#1D9E75" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <line x1="254" y1="198" x2="266" y2="214" stroke="#1D9E75" stroke-width="1.5"/>
+  <line x1="266" y1="198" x2="254" y2="214" stroke="#1D9E75" stroke-width="1.5"/>
+  <line x1="20" y1="274" x2="44" y2="274" stroke="#888780" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="50" y="278" font-size="10" fill="#5F5E5A">легитимный трафик</text>
+  <line x1="160" y1="274" x2="184" y2="274" stroke="#E24B4A" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+  <text x="190" y="278" font-size="10" fill="#5F5E5A">перехват / копирование</text>
+  <line x1="340" y1="274" x2="364" y2="274" stroke="#1D9E75" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <text x="370" y="278" font-size="10" fill="#5F5E5A">защита (гибрид)</text>
+  <line x1="20" y1="300" x2="760" y2="300" stroke="#D3D1C7" stroke-width="0.5"/>
+  <circle cx="80" cy="300" r="3" fill="#888780"/>
+  <text x="80" y="314" text-anchor="middle" font-size="9" fill="#888780">2025: сбор</text>
+  <circle cx="390" cy="300" r="3" fill="#E24B4A"/>
+  <text x="390" y="314" text-anchor="middle" font-size="9" fill="#E24B4A">2025–2030: хранение</text>
+  <circle cx="650" cy="300" r="3" fill="#E24B4A"/>
+  <text x="650" y="314" text-anchor="middle" font-size="9" fill="#E24B4A">2031: расшифровка</text>
+</svg>
