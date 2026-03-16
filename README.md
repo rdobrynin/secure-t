@@ -69,7 +69,7 @@ from typing import Tuple
 
 def check_quantum_risk(data_type: str, shelf_life_years: int, migration_estimate_years: int) -> Tuple[bool, int]:
     """Оценка риска по теореме Моска."""
-    YEAR_CRQC_ARRIVAL = 2032
+    YEAR_CRQC_ARRIVAL = 2031
     current_year = datetime.date.today().year
     time_to_collapse_z = YEAR_CRQC_ARRIVAL - current_year
     total_exposure = shelf_life_years + migration_estimate_years
