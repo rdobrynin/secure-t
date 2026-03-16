@@ -55,11 +55,22 @@
 import datetime
 from typing import Tuple
 
-def check_quantum_risk(data_type: str, shelf_life_years: int, migration_estimate_years: int) -> Tuple[bool, int]:
+# Консервативная оценка на основе:
+# — McKinsey Global Institute (2023): «высокая вероятность к 2030–2035»
+# — NIST IR 8547 (2024): рекомендует завершить миграцию до 2030
+# — Gidney & Ekerå (обновление 2025): снижение порога до <1M физических кубитов
+# Обновляйте значение по мере появления новых данных.
+YEAR_CRQC_ARRIVAL = 2032  # консервативная оценка; команда может изменить
+
+def check_quantum_risk(
+    data_type: str,
+    shelf_life_years: int,
+    migration_estimate_years: int,
+    crqc_year: int = YEAR_CRQC_ARRIVAL,
+) -> Tuple[bool, int]:
     """Оценка риска по теореме Моска."""
-    YEAR_CRQC_ARRIVAL = 2032
     current_year = datetime.date.today().year
-    time_to_collapse_z = YEAR_CRQC_ARRIVAL - current_year
+    time_to_collapse_z = crqc_year - current_year
     total_exposure = shelf_life_years + migration_estimate_years
 
     print(f"--- Анализ для: {data_type} ---")
@@ -73,10 +84,14 @@ def check_quantum_risk(data_type: str, shelf_life_years: int, migration_estimate
         return True, safety_margin
 
 if __name__ == "__main__":
+    # Стандартный расчёт с консервативной оценкой (2032)
     check_quantum_risk("Session Tokens", shelf_life_years=0, migration_estimate_years=3)
     check_quantum_risk("Genomic Data / Trade Secrets", shelf_life_years=15, migration_estimate_years=5)
-    # Примечание: YEAR_CRQC_ARRIVAL = 2032 — консервативная оценка.
-    # Обновляйте константу по мере появления новых данных о прогрессе CRQC.
+
+    # Пример: если ваша команда считает Q-Day более реалистичным в 2030
+    check_quantum_risk("Trade Secrets (агрессивный сценарий)",
+                       shelf_life_years=10, migration_estimate_years=3,
+                       crqc_year=2030)
 ```
 
 ---
@@ -174,7 +189,20 @@ AES не имеет математической периодичности, н�
 
 ### Новый арсенал: стандарты NIST
 
-**ML-KEM (ранее Kyber) — FIPS 203.** KEM на модульных решётках, замена ECDH в TLS. На процессорах с AVX2 работает быстрее эллиптических кривых. Плата — размер данных: публичный ключ занимает 1184 байта против 32 байт у X25519. Нормально для дата-центра, но важно учитывать для IoT и медленных каналов.
+Прежде чем разбирать алгоритмы — три термина, которые встретятся в каждом из них:
+
+- **KEM (Key Encapsulation Mechanism)** — механизм обмена ключами. Одна сторона
+  «запечатывает» секрет в публичный ключ другой стороны, та «распечатывает» своим
+  приватным. Замена привычного Диффи-Хеллмана.
+- **DSA (Digital Signature Algorithm)** — алгоритм цифровой подписи. Позволяет
+  убедиться, что данные пришли именно от того, кто их подписал, и не были изменены.
+  Используется в сертификатах, TLS, подписи кода.
+- **SLH (Stateless Hash-based)** — класс алгоритмов, чья безопасность основана
+  исключительно на хеш-функциях, а не на математике решёток. «Stateless» означает,
+  что алгоритм не хранит внутреннего состояния между подписями — это упрощает
+  реализацию и снижает риск ошибок.
+
+**ML-KEM (ранее Kyber) — FIPS 203.** KEM на модульных решётках, замена ECDH в TLS.
 
 ![Криптография_таблица.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_%D1%82%D0%B0%D0%B1%D0%BB%D0%B8%D1%86%D0%B0.png)
 
@@ -235,7 +263,7 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 - Б) Нет, AES-256 достаточно — Гровер снижает стойкость лишь вдвое (до 128 бит), этого хватает.
 - В) Да, нужно переходить на AES-512.
 
-**Правильный ответ: Б.** Алгоритм Гровера даёт квадратичное ускорение: 256 бит → эффективные 128 бит. Достаточно.
+✅ **Б** — Гровер даёт квадратичное ускорение: 256 бит → эффективные 128 бит. Достаточно.
 
 ---
 
@@ -245,7 +273,7 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 - Б) Соединение сразу разорвётся с ошибкой шифрования.
 - В) Пакет фрагментируется, но старое оборудование (Middleboxes) может его дропнуть.
 
-**Правильный ответ: В.** Риск Ossification: старые файрволы не распознают фрагментированный `ClientHello` как легитимный TLS.
+✅ **В** — старые файрволы не распознают фрагментированный `ClientHello` как легитимный TLS.
 
 ---
 
@@ -255,7 +283,7 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 - Б) Объединить ECDH и ML-KEM — данные останутся защищены, даже если один алгоритм окажется уязвимым.
 - В) Использовать два PQC-алгоритма для ускорения.
 
-**Правильный ответ: Б.** Если Kyber взломают математики — спасёт ECDH. Если ECDH взломает CRQC — спасёт Kyber.
+✅ **Б** — если Kyber взломают математики — спасёт ECDH. Если ECDH взломает CRQC — спасёт Kyber.
 
 ---
 
@@ -265,7 +293,7 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 - Б) SLH-DSA (SPHINCS+)
 - В) RSA-4096
 
-**Правильный ответ: Б.** SLH-DSA основан на хеш-функциях — максимально консервативный выбор для долгосрочного применения, не зависит от решёток.
+✅ **Б** — SLH-DSA основан на хеш-функциях — максимально консервативный выбор для долгосрочного применения, не зависит от решёток.
 
 ---
 
@@ -275,7 +303,7 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 - Б) Данные, перехваченные сегодня, будут расшифрованы через 10 лет, когда появится CRQC.
 - В) Это маркетинговый ход.
 
-**Правильный ответ: Б.** Долгоживущие секреты, украденные сегодня, будут прочитаны в будущем.
+✅ **Б** — долгоживущие секреты, украденные сегодня, будут прочитаны в будущем.
 
 ---
 
@@ -285,7 +313,7 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 - Б) SLH-DSA
 - В) ML-KEM (Kyber)
 
-**Правильный ответ: В.** ML-KEM (Kyber) — Key Encapsulation Mechanism. Остальные — алгоритмы подписи.
+✅ **В** — ML-KEM (Kyber) — Key Encapsulation Mechanism. Остальные — алгоритмы подписи.
 
 ---
 
@@ -295,7 +323,7 @@ MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
 - Б) Увеличение размера данных (Public Key + Ciphertext), повышающее Latency.
 - В) Необходимость специального квантового браузера.
 
-**Правильный ответ: Б.** Главная проблема PQC — «вес» ключей. На медленном канале лишние килобайты заметно замедляют открытие страницы.
+✅ **Б** — главная проблема PQC — «вес» ключей. На медленном канале лишние килобайты заметно замедляют открытие страницы.
 
 ---
 
