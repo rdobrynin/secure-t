@@ -1,0 +1,531 @@
+
+# Квантовый апокалипсис отменяется: инженерный гайд по переходу на Post-Quantum Cryptography (PQC)
+
+## Об этом уроке
+
+В 2024 году NIST перевёл PQC из разряда «научных экспериментов» в разряд обязательных требований. Apple, Google и Signal уже внедрили защиту. В этом уроке — почему угроза реальна уже сейчас и как мигрировать инфраструктуру без потери совместимости.
+
+**В уроке:** стратегия HNDL · стандарты NIST (ML-KEM, ML-DSA, SLH-DSA) · почему AES-256 выживет, а RSA и ECC — нет · гибридная защита X25519 + Kyber · инженерные боли: MTU, Ossification
+
+**Содержание:** Что такое PQC → Глазами хакера (угрозы + сценарии атак) → Глазами разработчика (алгоритмы + боли внедрения) → Предотвращение → Тест → Задание
+
+---
+
+## Что такое PQC?
+
+13 августа 2024 года NIST утвердил стандарты FIPS 203, 204, 205 — примерно как появление SSL в 90-х, только ставки выше. Если ваш бэкенд использует жёстко прописанные параметры TLS, старые VPN-шлюзы или IoT-устройства — переход на PQC потребует подготовки инфраструктуры, иначе сервис может сломаться ещё до появления первого квантового компьютера.
+
+> **Главный тезис:** переход на PQC — это инженерная задача по миграции инфраструктуры. Начинать её нужно задолго до появления первого квантового компьютера.
+
+---
+
+## PQC глазами хакера
+
+### Почему взлома ещё нет: парадокс NISQ
+
+В новостях появляются заголовки о 100+ кубитных процессорах. Если для взлома RSA нужно ~4000 логических кубитов, почему интернет ещё не рухнул?
+
+Ответ — в качестве кубитов. Сегодня мы живём в эпоху NISQ — «шумных» квантовых компьютеров. Физические кубиты теряют состояние (декогеренция) за микросекунды. Для взлома криптографии нужен **CRQC** (Cryptographically Relevant Quantum Computer), работающий с **логическими кубитами** — каждый из которых строится из сотен физических кубитов, занятых коррекцией ошибок.
+
+![Криптография_1.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_1.png)
+
+К 2025 году оптимизация алгоритма Шора (Gidney Optimization) снизила необходимое
+число физических кубитов для взлома RSA-2048 с ~20 миллионов до менее 1 миллиона.
+Прогноз появления CRQC сдвинулся с «никогда» на начало 2030-х.
+
+### Стратегия HNDL: атака, которая уже идёт
+
+Квантового компьютера ещё нет, но ваши данные **уже собирают**. Атака Harvest Now, Decrypt Later работает в три шага:
+
+1. **Harvest (Сбор):** злоумышленник записывает зашифрованный трафик. Сейчас это выглядит как мусор.
+2. **Store (Хранение):** терабайты складываются в холодные хранилища. Стоимость — копейки.
+3. **Decrypt (Расшифровка):** когда появится CRQC, он перемалывает накопленные архивы.
+
+Не критично: пароли от соцсетей — вы их меняете раз в полгода. Критично: банковские транзакции, медицинские данные (геном не перевыпустить), государственные тайны, ключи IoT с долгим сроком службы.
+
+> Если вы передаёте данные, которые должны оставаться секретными более 5 лет — вы **уже** уязвимы.
+
+### Теорема Моска: математика неизбежности
+
+Микеле Моска формализовал риск простым неравенством: **X + Y > Z**, где X — срок жизни ваших данных (лет), Y — время на полную миграцию инфраструктуры на PQC (лет, и это всегда дольше, чем кажется), Z — время до появления CRQC. Если сумма X и Y превышает Z — данные будут скомпрометированы до того, как вы успеете защититься. Проверьте себя с помощью калькулятора ниже.
+
+![mosca_theorem_ru.png](mosca_theorem_ru.png)
+
+```kotlin
+import java.time.LocalDate
+
+// Консервативная оценка: McKinsey (2023), NIST IR 8547 (2024), Gidney & Ekerå (2025)
+const val YEAR_CRQC_ARRIVAL = 2032
+
+data class RiskResult(val isSafe: Boolean, val years: Int)
+
+fun checkQuantumRisk(
+    dataType: String,
+    shelfLifeYears: Int,
+    migrationEstimateYears: Int,
+    crqcYear: Int = YEAR_CRQC_ARRIVAL
+): RiskResult {
+    val currentYear = LocalDate.now().year
+    val timeToCollapseZ = crqcYear - currentYear
+    val totalExposure = shelfLifeYears + migrationEstimateYears
+
+    println("--- Анализ для: $dataType ---")
+    return if (totalExposure > timeToCollapseZ) {
+        val riskGap = totalExposure - timeToCollapseZ
+        println("🔴 КРИТИЧЕСКИЙ РИСК. Вы опоздали на $riskGap лет.")
+        RiskResult(isSafe = false, years = riskGap)
+    } else {
+        val safetyMargin = timeToCollapseZ - totalExposure
+        println("🟢 Безопасно. Запас: $safetyMargin лет.")
+        RiskResult(isSafe = true, years = safetyMargin)
+    }
+}
+
+fun main() {
+    checkQuantumRisk("Session Tokens", shelfLifeYears = 0, migrationEstimateYears = 3)
+    checkQuantumRisk("Genomic Data / Trade Secrets", shelfLifeYears = 15, migrationEstimateYears = 5)
+    checkQuantumRisk("Trade Secrets (агрессивный сценарий)", shelfLifeYears = 10, migrationEstimateYears = 3, crqcYear = 2030)
+}
+```
+
+---
+
+### Сценарии атак
+
+---
+
+#### Сценарий 1 — «Тихий архивариус» (HNDL на корпоративный VPN)
+
+**Идея.** Злоумышленник перехватывает зашифрованный VPN-трафик и складывает в долгосрочное хранилище. Текущие алгоритмы делают архивы нечитаемыми — пока не появится CRQC.
+
+**Эксплуатация пошагово.**
+
+1. Противник получает позицию в транзитной сети (BGP hijacking, скомпрометированный ISP).
+2. Записывает зашифрованный трафик в PCAP-файлы: TLS handshake + payload.
+3. Сохраняет архивы в холодное хранилище — $1–2/ТБ в месяц.
+4. После появления CRQC запускает алгоритм Шора на записанных TLS handshake'ах, восстанавливает ключи сессий.
+5. Расшифровывает весь накопленный трафик ретроспективно.
+
+== Интерактив: «Терпеливый Артём» ==
+см. файл INTERACTIVE.md и INTERACTIVE.html
+== Конец интерактива ==
+
+**Риск.** Компрометация происходит задним числом — к моменту расшифровки атакующий остаётся незамеченным годами.
+
+**Как быстро обнаружить.** Прямого индикатора нет. Единственное, что можно сделать до Q-Day: настройте netflow-мониторинг с алертами на аномальный исходящий объём (nfdump, Elastic Flow). Это создаст baseline — и когда паттерн изменится, вы это увидите. Косвенные признаки: неожиданные BGP-изменения маршрутов, «зеркала» трафика в логах.
+
+**Исправление / фикс.**
+
+```kotlin
+// Kotlin (JSSE + BouncyCastle PQC provider)
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLParameters
+import java.security.Security
+
+fun configureHybridTLS(): SSLContext {
+    // Регистрируем провайдеры
+    Security.addProvider(BouncyCastleProvider())
+    Security.addProvider(BouncyCastlePQCProvider())
+
+    val sslContext = SSLContext.getInstance("TLS")
+    sslContext.init(null, null, null)
+
+    return sslContext
+}
+
+fun applyHybridGroups(sslContext: SSLContext): SSLParameters {
+    val params = sslContext.defaultSSLParameters
+
+    // ДО: только классический ECDH
+    // params.namedGroups = arrayOf("secp256r1")
+
+    // ПОСЛЕ: гибридный обмен
+    // x25519_mlkem768 — квантово-устойчивый гибрид (предпочтительный)
+    // x25519 — fallback для старых клиентов
+    params.namedGroups = arrayOf(
+        "x25519_mlkem768",
+        "x25519"
+    )
+
+    return params
+}
+
+// Даже если CRQC взломает X25519 — ML-KEM-768 сохранит конфиденциальность.
+// Для расшифровки нужно сломать оба алгоритма одновременно.
+fun main() {
+    val ctx = configureHybridTLS()
+    val params = applyHybridGroups(ctx)
+    println("Активные группы: ${params.namedGroups.joinToString(", ")}")
+}
+```
+Зависимости в build.gradle.kts:
+
+```kotlin
+implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+implementation("org.bouncycastle:bcpqc-jdk18on:1.80")
+```
+
+Даже если CRQC взломает X25519 — ML-KEM-768 сохранит конфиденциальность. Для расшифровки нужно сломать оба алгоритма одновременно.
+
+![scenario1_hndl_vpn.svg](scenario1_hndl_vpn.svg)
+
+---
+
+#### Сценарий 2 — «Просроченный сертификат» (атака на PKI)
+
+**Идея.** Когда появится CRQC, злоумышленник восстановит приватный ключ из публичного сертификата любого CA и сможет выдавать себя за любой сайт.
+
+**Эксплуатация пошагово.**
+
+1. Противник собирает публичные сертификаты CA из Certificate Transparency logs.
+2. После появления CRQC запускает алгоритм Шора на ECDSA-ключах CA.
+3. Восстанавливает приватный ключ промежуточного или корневого CA.
+4. Выписывает поддельный сертификат на любой домен — браузеры принимают его как валидный.
+5. Проводит MitM-атаку: перехватывает и расшифровывает HTTPS-трафик.
+
+**Риск.** Системный: под удар попадает вся PKI-инфраструктура интернета. Особенно критично для банков, корпоративных VPN с mTLS и платёжных систем.
+
+**Как быстро обнаружить.** Мониторинг Certificate Transparency logs: `certspotter`, `crt.sh`, `cert-manager` с алертами. Аномалии в OCSP-ответах и CRL-обновлениях.
+
+**Исправление / фикс.**
+
+```
+# Иерархия доверия после миграции:
+Root CA:         SLH-DSA (SPHINCS+)  — максимальная консервативность, основан на хеш-функциях
+Intermediate CA: ML-DSA (Dilithium)  — скорость + надёжность
+End-entity cert: ML-DSA (Dilithium)  — подпись TLS-сертификатов
+Key exchange:    ML-KEM (Kyber)      — обмен ключами в TLS handshake
+```
+
+> **Примечание.** Браузеры и ОС должны обновить хранилища корневых CA до ML-DSA/SLH-DSA. Apple, Google и Mozilla анонсировали планы поддержки PQC-сертификатов.
+
+![scenario2_pki_attack.svg](scenario2_pki_attack.svg)
+
+---
+
+## PQC глазами разработчика
+
+### Смерть классики: алгоритм Шора против RSA и ECC
+
+Вся современная асимметричная криптография держится на **функциях с потайным входом** — задачах, которые легко решить в одну сторону и практически невозможно в обратную. RSA — на сложности факторизации, ECC и DH — на дискретном логарифме. Алгоритм Шора делает обе задачи тривиальными.
+
+**Парадокс ECC:** ключ ECC-256 компактнее RSA-3072 при эквивалентной стойкости. В квантовом мире эта компактность оборачивается уязвимостью — более короткий ключ требует меньше кубитов для взлома. RSA-2048: ~4098 логических кубитов, ECDSA-256: ~2330. Эллиптические кривые, вероятно, падут первыми.
+
+![pic2.png](pic2.png)
+
+### AES выживает: алгоритм Гровера
+
+AES не имеет математической периодичности, на которой работает алгоритм Шора. Здесь действует алгоритм Гровера — квадратичное ускорение перебора: N операций → √N. AES-128 даёт эффективные **64 бита** (небезопасно), AES-256 — эффективные **128 бит** (надёжно). Решение элегантно: просто удвоить длину ключа. AES-128 → **AES-256**, SHA-256 → **SHA-512**.
+
+![Криптография_3.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_3.png)
+
+### Новый арсенал: стандарты NIST
+
+Прежде чем разбирать алгоритмы — три термина, которые встретятся в каждом из них:
+
+- **KEM (Key Encapsulation Mechanism)** — механизм обмена ключами. Одна сторона
+  «запечатывает» секрет в публичный ключ другой стороны, та «распечатывает» своим
+  приватным. Замена привычного Диффи-Хеллмана.
+- **DSA (Digital Signature Algorithm)** — алгоритм цифровой подписи. Позволяет
+  убедиться, что данные пришли именно от того, кто их подписал, и не были изменены.
+  Используется в сертификатах, TLS, подписи кода.
+- **SLH (Stateless Hash-based)** — класс алгоритмов, чья безопасность основана
+  исключительно на хеш-функциях, а не на математике решёток. «Stateless» означает,
+  что алгоритм не хранит внутреннего состояния между подписями — это упрощает
+  реализацию и снижает риск ошибок.
+
+- **ML-KEM (ранее Kyber) — FIPS 203.** KEM на модульных решётках, замена ECDH в TLS.
+Как это работает: клиент генерирует ключевую пару, отправляет публичный ключ серверу. Сервер запечатывает (encapsulate) в него общий секрет и возвращает ciphertext. Клиент распечатывает (decapsulate) секрет своим приватным ключом.
+
+![Криптография_таблица.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_%D1%82%D0%B0%D0%B1%D0%BB%D0%B8%D1%86%D0%B0.png)
+
+Kyber закрывает задачу обмена ключами — но данные нужно ещё и подписывать. Здесь в игру вступает **ML-DSA (ранее Dilithium) — FIPS 204** — цифровая подпись на решётках, основной выбор для сертификатов и TLS. Быстрая проверка подписи критична, когда браузер проверяет цепочки сертификатов за миллисекунды.
+
+ML-DSA быстрый, но держится на той же математике решёток, что и Kyber. Если нужна независимая страховка — берите **SLH-DSA (ранее SPHINCS+) — FIPS 205**: цифровая подпись на хеш-функциях, безопасность не зависит от решёток. Медленный, подпись весит 8–40 КБ. Применять там, где проверка редка: подпись прошивок, корневые сертификаты.
+
+**HQC — резервный KEM (4-й раунд, март 2025).** Основан на теории кодирования — страховка на случай, если в решётках найдут уязвимость.
+
+![Криптография_5.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_5.png)
+
+| Задача | Алгоритм |
+|---|---|
+| Шифрование трафика | ML-KEM (Kyber) |
+| Сертификаты и авторизация | ML-DSA (Dilithium) |
+| Подпись ПО, долгосрочные ключи | SLH-DSA (SPHINCS+) |
+| Резерв на случай провала решёток | HQC |
+
+### Инженерные боли: MTU, фрагментация, Ossification
+
+Главная проблема PQC — не сложность математики, а то, что она **тяжёлая**. Ключ X25519 занимает 32 байта, в мире PQC «бесплатная» безопасность заканчивается.
+
+![Криптография_таблица_2.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_%D1%82%D0%B0%D0%B1%D0%BB%D0%B8%D1%86%D0%B0_2.png)
+
+Стандартный MTU — **1500 байт**. Классический `ClientHello` в TLS 1.3 занимает 300–500 байт. При гибридном обмене (X25519 + ML-KEM-768) он вырастает на ~1200 байт и легко перевалит за MTU. Последствия: TCP-фрагментация, рост Latency на мобильных сетях на 20–40%, и главное — **Middlebox Ossification**: старые файрволы дропают фрагментированные пакеты, не распознавая их как легитимный TLS. По данным Cloudflare и Google, ~1–2% соединений ломаются именно из-за этого.
+
+![pic6_1.png](pic6_1.png)
+
+![pic7.png](pic7.png)
+
+---
+
+## Предотвращение: гибридная защита
+
+### Паттерн «Ремень и подтяжки»: X25519 + Kyber
+
+![hybrid_tls_diagram.png](hybrid_tls_diagram.png)
+
+Решётки изучаются 20–30 лет, тогда как факторизация — столетиями. Риск математической ошибки в новых алгоритмах реальный. Поэтому применяется **гибридный обмен ключами**: две независимые пары секретов.
+
+```
+MasterSecret = KDF(SharedSecret_ECDH || SharedSecret_Kyber)
+```
+
+Защита падёт только если атакующий одновременно располагает CRQC **и** неизвестной уязвимостью в Kyber. Signal первым среди массовых мессенджеров внедрил этот подход в протоколе PQXDH — Kyber-1024 рядом с Curve25519.
+
+![Криптография_таблица_3.png](%D0%9A%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F_%D1%82%D0%B0%D0%B1%D0%BB%D0%B8%D1%86%D0%B0_3.png)
+
+![pic9.png](pic9.png)
+
+---
+
+## Тест
+
+**Вопрос 1.** Нужно ли срочно менять AES-256 на что-то принципиально новое?
+
+- А) Да, AES полностью взломан алгоритмом Шора.
+- Б) Нет, AES-256 достаточно — Гровер снижает стойкость лишь вдвое (до 128 бит), этого хватает.
+- В) Да, нужно переходить на AES-512.
+
+✅ **Б** — Гровер даёт квадратичное ускорение: 256 бит → эффективные 128 бит. Достаточно.
+
+---
+
+**Вопрос 2.** Что произойдёт, если `ClientHello` из-за PQC-ключей превысит MTU (1500 байт)?
+
+- А) Пакет просто фрагментируется на уровне TCP.
+- Б) Соединение сразу разорвётся с ошибкой шифрования.
+- В) Пакет фрагментируется, но старое оборудование (Middleboxes) может его дропнуть.
+
+✅ **В** — старые файрволы не распознают фрагментированный `ClientHello` как легитимный TLS.
+
+---
+
+**Вопрос 3.** В чём главный смысл гибридного обмена ключами?
+
+- А) Использовать квантовый компьютер для генерации ключей.
+- Б) Объединить ECDH и ML-KEM — данные останутся защищены, даже если один алгоритм окажется уязвимым.
+- В) Использовать два PQC-алгоритма для ускорения.
+
+✅ **Б** — если Kyber взломают математики — спасёт ECDH. Если ECDH взломает CRQC — спасёт Kyber.
+
+---
+
+**Вопрос 4.** Система обновления прошивки для спутника (срок службы 20 лет). Проверка редка, надёжность абсолютная. Какой алгоритм?
+
+- А) ML-DSA (Dilithium)
+- Б) SLH-DSA (SPHINCS+)
+- В) RSA-4096
+
+✅ **Б** — SLH-DSA основан на хеш-функциях — максимально консервативный выбор для долгосрочного применения, не зависит от решёток.
+
+---
+
+**Вопрос 5.** Почему угроза HNDL актуальна, если CRQC ещё не существует?
+
+- А) Хакеры уже используют квантовые эмуляторы.
+- Б) Данные, перехваченные сегодня, будут расшифрованы через 10 лет, когда появится CRQC.
+- В) Это маркетинговый ход.
+
+✅ **Б** — долгоживущие секреты, украденные сегодня, будут прочитаны в будущем.
+
+---
+
+**Вопрос 6.** Какой стандарт NIST предназначен для замены ECDH, а не для подписи?
+
+- А) ML-DSA
+- Б) SLH-DSA
+- В) ML-KEM (Kyber)
+
+✅ **В** — ML-KEM (Kyber) — Key Encapsulation Mechanism. Остальные — алгоритмы подписи.
+
+---
+
+**Вопрос 7.** Внедряете PQC на веб-сервере. Что сильнее всего повлияет на UX при плохом мобильном интернете?
+
+- А) Нагрузка на процессор телефона при вычислении ключей.
+- Б) Увеличение размера данных (Public Key + Ciphertext), повышающее Latency.
+- В) Необходимость специального квантового браузера.
+
+✅ **Б** — главная проблема PQC — «вес» ключей. На медленном канале лишние килобайты заметно замедляют открытие страницы.
+
+---
+
+## Задание на работу с кодом
+
+**Контекст.** Вы — Backend-разработчик в финтех-стартапе. Конфигурация TLS уязвима для атаки HNDL. Задача — перевести сервис на гибридную схему с поддержкой обратной совместимости (Crypto Agility).
+
+**Исходный код (Legacy):**
+
+```kotlin
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
+import java.security.Security
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLParameters
+import javax.net.ssl.SSLServerSocket
+
+// ВНИМАНИЕ: явно задавайте все параметры TLS.
+// Default-значения JSSE могут включать устаревшие алгоритмы —
+// не полагайтесь на них.
+
+object TLSConfig {
+
+    // ДО (Legacy) — уязвимая конфигурация
+    fun createContextLegacy(): SSLParameters {
+        val params = SSLContext.getDefault().defaultSSLParameters
+        // [УЯЗВИМОСТЬ 1] ECDH без квантовой защиты — весь трафик уязвим для HNDL
+        params.namedGroups = arrayOf("secp256r1")
+        // [УЯЗВИМОСТЬ 2] AES-128 — Гровер снижает стойкость до 64 бит
+        params.cipherSuites = arrayOf("TLS_AES_128_GCM_SHA256")
+        return params
+    }
+
+    // ПОСЛЕ — гибридная схема с Crypto Agility
+    fun createContext(): Pair<SSLContext, SSLParameters> {
+        // Регистрируем провайдеры с поддержкой PQC
+        Security.addProvider(BouncyCastleProvider())
+        Security.addProvider(BouncyCastlePQCProvider())
+
+        val ctx = SSLContext.getInstance("TLSv1.3")
+        ctx.init(null, null, null)
+
+        val params = ctx.defaultSSLParameters.apply {
+            // [ФИКС 1] Гибридный обмен ключами: квантово-устойчивый + классический
+            // x25519_mlkem768 — предпочтительный (PQC-гибрид)
+            // x25519           — fallback для старых клиентов (Crypto Agility)
+            namedGroups = arrayOf(
+                "x25519_mlkem768",  // квантово-устойчивый гибрид
+                "x25519"            // fallback
+            )
+
+            // [ФИКС 2] AES-256 — после атаки Гровера остаётся 128 бит стойкости
+            cipherSuites = arrayOf(
+                "TLS_AES_256_GCM_SHA384",
+                "TLS_CHACHA20_POLY1305_SHA256"
+            )
+
+            protocols = arrayOf("TLSv1.3")
+        }
+
+        return ctx to params
+    }
+}
+
+fun main() {
+    val (ctx, params) = TLSConfig.createContext()
+
+    val serverSocket = ctx.serverSocketFactory
+        .createServerSocket(8443) as SSLServerSocket
+
+    serverSocket.sslParameters = params
+
+    println("Listening on :8443 (hybrid PQC)")
+    println("Active groups:   ${params.namedGroups.joinToString(", ")}")
+    println("Active ciphers:  ${params.cipherSuites.joinToString(", ")}")
+
+    while (true) {
+        val conn = serverSocket.accept()
+        Thread {
+            conn.use {
+                val tlsSocket = it as javax.net.ssl.SSLSocket
+                tlsSocket.startHandshake()
+                val session = tlsSocket.session
+                println("Cipher: ${session.cipherSuite} | Protocol: ${session.protocol}")
+            }
+        }.start() 
+    }
+}
+```
+
+**Задание:**
+
+1. Замените группу обмена ключами на гибридную (X25519 + Kyber768).
+2. Добавьте fallback на X25519 для старых клиентов (не RSA).
+3. Обновите симметричный шифр для устойчивости к Гроверу.
+
+**Подсказки:** для защиты от Гровера нужен ключ ≥ 256 бит; метод принимает список, порядок определяет приоритет; гибридная группа — `x25519_mlkem768`.
+
+**Ответ (исправленный код):**
+
+```kotlin
+// Kotlin (JSSE + BouncyCastle 1.80+)
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
+import java.security.Security
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLParameters
+import javax.net.ssl.SSLServerSocket
+
+fun createQuantumSafeContext(): Pair<SSLContext, SSLParameters> {
+    Security.addProvider(BouncyCastleProvider())
+    Security.addProvider(BouncyCastlePQCProvider())
+
+    val ctx = SSLContext.getInstance("TLSv1.3")
+    ctx.init(null, null, null)
+
+    val params = ctx.defaultSSLParameters.apply {
+        // Гибридный обмен: квантово-устойчивый + классический fallback
+        // Порядок определяет приоритет
+        // Когда доля клиентов без PQC-поддержки упадёт до нуля —
+        // "x25519" можно убрать
+        namedGroups = arrayOf(
+            "x25519_mlkem768", // гибрид — предпочтительный
+            "x25519"           // fallback; RSA key exchange исключён намеренно
+        )
+
+        // AES-256 — после Гровера остаётся 128 бит стойкости (ключ ≥ 256 бит)
+        // ChaCha20 — для мобильных устройств без аппаратного AES
+        cipherSuites = arrayOf(
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_CHACHA20_POLY1305_SHA256"
+        )
+
+        protocols = arrayOf("TLSv1.3")
+    }
+
+    return ctx to params
+}
+
+fun main() {
+    val (ctx, params) = createQuantumSafeContext()
+
+    val serverSocket = ctx.serverSocketFactory
+        .createServerSocket(8443) as SSLServerSocket
+    serverSocket.sslParameters = params
+
+    println("Listening on :8443")
+    println("Groups:  ${params.namedGroups.joinToString(", ")}")
+    println("Ciphers: ${params.cipherSuites.joinToString(", ")}")
+
+    while (true) {
+        val conn = serverSocket.accept()
+        Thread {
+            conn.use {
+                val tlsSocket = it as javax.net.ssl.SSLSocket
+                tlsSocket.startHandshake()
+                val session = tlsSocket.session
+                println("Cipher: ${session.cipherSuite} | Protocol: ${session.protocol}")
+            }
+        }.start()
+    }
+}
+```
+build.gradle.kts:
+```kotlin
+implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+implementation("org.bouncycastle:bcpqc-jdk18on:1.80")
+```
+
+**Объяснение:** X25519 защищает от математической ошибки в Kyber, ML-KEM-768 — от CRQC. Fallback сохраняет доступность. AES-256 закрывает уязвимость перед алгоритмом Гровера.
