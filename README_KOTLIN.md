@@ -444,7 +444,7 @@ fun main() {
                 val session = tlsSocket.session
                 println("Cipher: ${session.cipherSuite} | Protocol: ${session.protocol}")
             }
-        }.start() 
+        }.start()
     }
 }
 ```

@@ -119,7 +119,7 @@ func main() {
 **Исправление / фикс.**
 
 ```go
-// Go (crypto/tls, Go 1.23+)
+// Go (crypto/tls, Go 1.24+)
 package main
 
 import (
@@ -501,6 +501,8 @@ func createQuantumSafeContext(cert tls.Certificate) *tls.Config {
 		// Порядок определяет приоритет
 		// Когда доля клиентов без PQC-поддержки упадёт до нуля —
 		// X25519 можно убрать
+		// Требует Go 1.24+
+        // В Go 1.23 использовалась экспериментальная tls.X25519Kyber768Draft00
 		CurvePreferences: []tls.CurveID{
 			tls.X25519MLKEM768, // гибрид — предпочтительный (Go 1.23+)
 			tls.X25519,         // fallback; RSA key exchange исключён намеренно
@@ -508,6 +510,8 @@ func createQuantumSafeContext(cert tls.Certificate) *tls.Config {
 
 		// AES-256 — после Гровера остаётся 128 бит стойкости (ключ ≥ 256 бит)
 		// ChaCha20 — для мобильных устройств без аппаратного AES
+		// Примечание: в Go CipherSuites для TLS 1.3 не конфигурируются явно —
+        // рантайм выбирает их автоматически. Список ниже носит документальный характер.
 		CipherSuites: []uint16{
 			tls.TLS_AES_256_GCM_SHA384,
 			tls.TLS_CHACHA20_POLY1305_SHA256,

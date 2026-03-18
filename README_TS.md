@@ -52,8 +52,6 @@
 ![mosca_theorem_ru.png](mosca_theorem_ru.png)
 
 ```typescript
-import { setTimeout } from "timers";
-
 // Консервативная оценка на основе:
 // — McKinsey Global Institute (2023): «высокая вероятность к 2030–2035»
 // — NIST IR 8547 (2024): рекомендует завершить миграцию до 2030
@@ -122,26 +120,30 @@ checkQuantumRisk("Trade Secrets (агрессивный сценарий)", 10, 
 
 ```typescript
 import * as tls from "tls";
+import * as fs from "fs";
 
 // ДО: только классический ECDH
 const serverBefore = tls.createServer({
-  key: yourKey,
-  cert: yourCert,
-  ecdhCurve: "prime256v1", // secp256r1
+  key:  fs.readFileSync("server.key"),
+  cert: fs.readFileSync("server.crt"),
+  ecdhCurve: "prime256v1", // secp256r1 — уязвим для HNDL
 });
 
 // ПОСЛЕ: гибридный обмен — PQ + классика
 const serverAfter = tls.createServer({
-  key: yourKey,
-  cert: yourCert,
+  key:  fs.readFileSync("server.key"),
+  cert: fs.readFileSync("server.crt"),
   // x25519_mlkem768 — квантово-устойчивый гибрид (предпочтительный)
   // x25519 — fallback для старых клиентов
-  // Node.js 22+ / OpenSSL 3.5+ required для x25519_mlkem768
+  // Требует Node.js 22+ / OpenSSL 3.5+
   ecdhCurve: "x25519_mlkem768:x25519",
 });
 
+// Даже если CRQC взломает X25519 — ML-KEM-768 сохранит конфиденциальность.
+// Для расшифровки нужно сломать оба алгоритма одновременно.
+
 // Проверка поддерживаемых групп на вашей платформе:
-// openssl list -kem-algorithms | g
+// openssl list -kem-algorithms | grep mlkem
 ```
 
 Даже если CRQC взломает X25519 — ML-KEM-768 сохранит конфиденциальность. Для расшифровки нужно сломать оба алгоритма одновременно.
@@ -424,7 +426,22 @@ function createQuantumSafeContext(): tls.TlsOptions {
       "x25519",          // fallback; RSA key exchange исключён намеренно
     ].join(":"),
 
-// AES-256 — после Гровера остаётся 128 бит стойкости (ключ ≥ 256 бит)
+    // AES-256 — после Гровера остаётся 128 бит стойкости (ключ ≥ 256 бит)
+    // ChaCha20 — для мобильных устройств без аппаратного AES
+    ciphers: [
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256",
+    ].join(":"),
+  };
+}
+
+const server = tls.createServer(createQuantumSafeContext(), (socket) => {
+  console.log("Negotiated cipher:", socket.getCipher());
+  console.log("Negotiated curve: ", socket.getEphemeralKeyInfo());
+  socket.end();
+});
+
+server.listen(8443, () => console.log("Listening on :8443 (hybrid PQC)"));
 ```
 
 **Объяснение:** X25519 защищает от математической ошибки в Kyber, ML-KEM-768 — от CRQC. Fallback сохраняет доступность. AES-256 закрывает уязвимость перед алгоритмом Гровера.
